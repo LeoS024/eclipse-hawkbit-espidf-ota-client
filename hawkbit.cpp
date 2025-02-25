@@ -142,12 +142,12 @@ UpdateResult HawkbitClient::updateRegistration(const Registration& registration,
             break;
     }
 
-    _doc.createNestedObject("data");
+    _doc["data"].to<JsonObject>();
     for (const std::pair<std::string,std::string> entry : data) {
         _doc["data"][std::string(entry.first)] = entry.second;
     }
 
-    JsonArray d = _doc["status"].createNestedArray("details");
+    JsonArray d = _doc["status"]["details"].to<JsonArray>();
     for (auto detail : details) {
         d.add(detail);
     }
@@ -245,22 +245,26 @@ State HawkbitClient::readState()
     return State();
 }
 
-std::map<std::string,std::string> toMap(const JsonObject& obj) {
-    std::map<std::string,std::string> result;
-    for (const JsonPair& p: obj) {
+std::map<std::string, std::string> toMap(const JsonObject& obj) {
+    std::map<std::string, std::string> result;
+    JsonObjectConst constObj = obj; // Create a const view
+    for (auto p : constObj) {
         if (p.value().is<const char*>()) {
-            result[std::string(p.key().c_str())] = std::string(p.value().as<const char*>());
+            result[p.key().c_str()] = p.value().as<const char*>();
         }
     }
     return result;
 }
 
-std::map<std::string,std::string> toLinks(const JsonObject& obj) {
-    std::map<std::string,std::string> result;
-    for (const JsonPair& p: obj) {
+std::map<std::string, std::string> toLinks(const JsonObject& obj) {
+    std::map<std::string, std::string> result;
+    JsonObjectConst constObj = obj; // Create a const view
+    for (auto p : constObj) {
         const char* key = p.key().c_str();
-        const char* value = p.value()["href"];
-        result[std::string(key)] = std::string(value);
+        const char* href = p.value()["href"].as<const char*>();
+        if (href != nullptr) {
+            result[key] = href;
+        }
     }
     return result;
 }
@@ -386,7 +390,7 @@ UpdateResult HawkbitClient::sendFeedback(IdProvider id, const std::string& execu
 
     _doc["id"] = id.id();
     
-    JsonArray d = _doc["status"].createNestedArray("details");
+    JsonArray d = _doc["status"]["details"].to<JsonArray>();
     for (auto detail : details) {
         d.add(detail);
     }
