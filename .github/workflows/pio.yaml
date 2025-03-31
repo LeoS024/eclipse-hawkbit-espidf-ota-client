@@ -20,7 +20,7 @@ jobs:
         pip install platformio
 
     - name: Install library dependencies
-      run: pio lib -g install ArduinoJson@6.14.0
+      run: pio lib -g install ArduinoJson@7.3.1
 
     - name: Run PlatformIO
       run: pio ci --lib="." --project-option="framework=espidf" --board=esp32dev
